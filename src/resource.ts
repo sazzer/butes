@@ -113,6 +113,11 @@ export interface EmbeddedLink extends EmbeddedEntityBase {
    * Defines media type of the linked sub-entity, per Web Linking (RFC5988).
    */
   readonly type?: string;
+
+  /**
+   * Actually fetch the resource that this link refers to
+   */
+  fetch<T>(): Promise<Resource<T>>;
 }
 
 /**

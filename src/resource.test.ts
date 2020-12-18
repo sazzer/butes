@@ -6,7 +6,7 @@ const mockClient = {} as Client;
 
 // Tests with an empty model
 test('Parse empty model', (t) => {
-  const resource = wrapResponse(mockClient, {});
+  const resource = wrapResponse(mockClient, 'http://api.x.io/', {});
 
   t.is(resource.title, undefined);
   t.is(resource.properties, undefined);
@@ -18,7 +18,7 @@ test('Parse empty model', (t) => {
 });
 
 test('Look up classes in empty model', (t) => {
-  const resource = wrapResponse(mockClient, {});
+  const resource = wrapResponse(mockClient, 'http://api.x.io/', {});
 
   t.false(resource.hasClass('unknown'));
   t.false(resource.hasAllClasses(['unknown']));
@@ -36,7 +36,7 @@ const sirenResponse = {
     {
       class: ['items', 'collection'],
       rel: ['http://x.io/rels/order-items'],
-      href: 'http://api.x.io/orders/42/items'
+      href: '/orders/42/items'
     },
     {
       class: ['info', 'customer'],
@@ -45,7 +45,7 @@ const sirenResponse = {
         customerId: 'pj123',
         name: 'Peter Joseph'
       },
-      links: [{ rel: ['self'], href: 'http://api.x.io/customers/pj123' }]
+      links: [{ rel: ['self'], href: '/customers/pj123' }]
     }
   ],
   actions: [
@@ -53,7 +53,7 @@ const sirenResponse = {
       name: 'add-item',
       title: 'Add Item',
       method: 'POST',
-      href: 'http://api.x.io/orders/42/items',
+      href: '/orders/42/items',
       type: 'application/x-www-form-urlencoded',
       fields: [
         { name: 'orderNumber', type: 'hidden', value: '42' },
@@ -63,15 +63,15 @@ const sirenResponse = {
     }
   ],
   links: [
-    { rel: ['self'], href: 'http://api.x.io/orders/42' },
-    { rel: ['previous'], href: 'http://api.x.io/orders/41' },
-    { rel: ['next'], href: 'http://api.x.io/orders/43' }
+    { rel: ['self'], href: '/orders/42' },
+    { rel: ['previous'], href: '/orders/41' },
+    { rel: ['next'], href: '/orders/43' }
   ]
 };
 
 // Tests with an full model
 test('Parse full model', (t) => {
-  const resource = wrapResponse(mockClient, sirenResponse);
+  const resource = wrapResponse(mockClient, 'http://api.x.io/', sirenResponse);
 
   t.is(resource.title, undefined);
   t.deepEqual(resource.class, ['order']);
@@ -156,7 +156,7 @@ test('Parse full model', (t) => {
 });
 
 test('Look up classes in full model', (t) => {
-  const resource = wrapResponse(mockClient, sirenResponse);
+  const resource = wrapResponse(mockClient, 'http://api.x.io/', sirenResponse);
 
   t.true(resource.hasClass('order'));
   t.false(resource.hasClass('unknown'));
@@ -173,7 +173,7 @@ test('Look up classes in full model', (t) => {
 });
 
 test('Look up classes in embedded link', (t) => {
-  const resource = wrapResponse(mockClient, sirenResponse);
+  const resource = wrapResponse(mockClient, 'http://api.x.io/', sirenResponse);
 
   const link = resource.entityLinks[0];
 
@@ -193,7 +193,7 @@ test('Look up classes in embedded link', (t) => {
 });
 
 test('Look up classes in embedded resource', (t) => {
-  const resource = wrapResponse(mockClient, sirenResponse);
+  const resource = wrapResponse(mockClient, 'http://api.x.io/', sirenResponse);
 
   const entity = resource.entityRepresentations[0];
 
@@ -213,7 +213,7 @@ test('Look up classes in embedded resource', (t) => {
 });
 
 test('Look up rels in embedded link', (t) => {
-  const resource = wrapResponse(mockClient, sirenResponse);
+  const resource = wrapResponse(mockClient, 'http://api.x.io/', sirenResponse);
 
   const link = resource.entityLinks[0];
 
@@ -232,7 +232,7 @@ test('Look up rels in embedded link', (t) => {
 });
 
 test('Look up rels in embedded resource', (t) => {
-  const resource = wrapResponse(mockClient, sirenResponse);
+  const resource = wrapResponse(mockClient, 'http://api.x.io/', sirenResponse);
 
   const entity = resource.entityRepresentations[0];
 
@@ -251,7 +251,7 @@ test('Look up rels in embedded resource', (t) => {
 });
 
 test('Look up rels in link', (t) => {
-  const resource = wrapResponse(mockClient, sirenResponse);
+  const resource = wrapResponse(mockClient, 'http://api.x.io/', sirenResponse);
 
   const link = resource.links[0];
 
@@ -270,7 +270,7 @@ test('Look up rels in link', (t) => {
 });
 
 test('Find link by rel', (t) => {
-  const resource = wrapResponse(mockClient, sirenResponse);
+  const resource = wrapResponse(mockClient, 'http://api.x.io/', sirenResponse);
 
   const link = resource.links.find((link) => link.hasRel('previous'));
   t.is(link.href, 'http://api.x.io/orders/41');
