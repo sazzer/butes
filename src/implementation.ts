@@ -22,7 +22,7 @@ export class ClientImpl implements Client {
  * @param client The API client to use for making ongoing calls
  * @param response The response to wrap
  */
-function wrapResponse<T>(client: Client, response: siren.Response<T>): resource.Resource<T> {
+export function wrapResponse<T>(client: Client, response: siren.Response<T>): resource.Resource<T> {
   const entityLinks = [];
   const entityRepresentations = [];
   (response.entities ?? []).forEach((entity) => {
@@ -36,11 +36,11 @@ function wrapResponse<T>(client: Client, response: siren.Response<T>): resource.
   return {
     title: response.title,
     properties: response.properties,
-    class: response.class ?? [],
     links: (response.links ?? []).map((link) => wrapLink(client, link)),
     entityLinks,
     entityRepresentations,
-    actions: wrapActions(client, response.actions ?? [])
+    actions: wrapActions(client, response.actions ?? []),
+    ...wrapClasses(response.class ?? [])
   };
 }
 
@@ -52,11 +52,11 @@ function wrapResponse<T>(client: Client, response: siren.Response<T>): resource.
  */
 function wrapLink(client: Client, link: siren.EmbeddedLink): resource.EmbeddedLink {
   return {
-    class: link.class ?? [],
     href: link.href,
-    rel: link.rel,
     title: link.title,
-    type: link.type
+    type: link.type,
+    ...wrapClasses(link.class ?? []),
+    ...wrapRels(link.rel)
   };
 }
 
@@ -78,14 +78,14 @@ function wrapEntity(client: Client, entity: siren.EmbeddedRepresentation): resou
   });
 
   return {
-    rel: entity.rel ?? [],
-    class: entity.class ?? [],
     title: entity.title,
     properties: entity.properties,
     links: (entity.links ?? []).map((link) => wrapLink(client, link)),
     entityLinks,
     entityRepresentations,
-    actions: wrapActions(client, entity.actions ?? [])
+    actions: wrapActions(client, entity.actions ?? []),
+    ...wrapClasses(entity.class ?? []),
+    ...wrapRels(entity.rel)
   };
 }
 
@@ -105,6 +105,11 @@ function isEmbeddedRepresentation(object: siren.EmbeddedEntity): object is siren
   return !('href' in object);
 }
 
+/**
+ * Wrap a list of actions as an object where the keys are the action names
+ * @param client The API client to use for making ongoing calls
+ * @param actions The list of actions to wrap
+ */
 function wrapActions(client: Client, actions: siren.Action[]): { [name: string]: resource.Action } {
   const result: { [name: string]: resource.Action } = {};
 
@@ -113,10 +118,10 @@ function wrapActions(client: Client, actions: siren.Action[]): { [name: string]:
     if (action.fields !== undefined) {
       action.fields.forEach((field) => {
         fields[field.name] = {
-          class: field.class ?? [],
           type: field.type ?? 'text',
           value: field.value,
-          title: field.title
+          title: field.title,
+          ...wrapClasses(field.class ?? [])
         };
       });
     }
@@ -125,11 +130,75 @@ function wrapActions(client: Client, actions: siren.Action[]): { [name: string]:
       href: action.href,
       method: action.method ?? 'GET',
       type: action.type ?? 'application/x-www-form-urlencoded',
-      class: action.class ?? [],
       title: action.title,
-      fields
+      fields,
+      ...wrapClasses(action.class ?? [])
     };
   });
 
   return result;
+}
+
+/**
+ * Helper to build the object fields to work with classes
+ * @param classes The classes to wrap
+ */
+function wrapClasses(classes: string[]): resource.HasClass {
+  return {
+    class: classes,
+    hasClass: hasValue(classes),
+    hasAllClasses: hasAllValues(classes),
+    hasAnyClass: hasAnyValue(classes)
+  };
+}
+
+/**
+ * Helper to build the object fields to work with rels
+ * @param rels The rels to wrap
+ */
+function wrapRels(rels: string[]): resource.HasRel {
+  return {
+    rel: rels,
+    hasRel: hasValue(rels),
+    hasAllRels: hasAllValues(rels),
+    hasAnyRel: hasAnyValue(rels)
+  };
+}
+
+/**
+ * Helper to build a function to see if a single input is in the given list of matches
+ * @param matches The values to match against
+ */
+function hasValue<T>(matches: T[]): (input: T) => boolean {
+  return (input) => matches.indexOf(input) !== -1;
+}
+
+/**
+ * Helper to build a function to see if all the inputs are in the given list of matches
+ * @param matches The values to match against
+ */
+function hasAllValues<T>(matches: T[]): (input: T[]) => boolean {
+  return (input) => {
+    for (const value of input) {
+      if (matches.indexOf(value) === -1) {
+        return false;
+      }
+    }
+    return true;
+  };
+}
+
+/**
+ * Helper to build a function to see if at least one of the inputs are in the given list of matches
+ * @param matches The values to match against
+ */
+function hasAnyValue<T>(matches: T[]): (input: T[]) => boolean {
+  return (input) => {
+    for (const value of input) {
+      if (matches.indexOf(value) !== -1) {
+        return true;
+      }
+    }
+    return false;
+  };
 }

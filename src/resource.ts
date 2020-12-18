@@ -1,7 +1,60 @@
+export interface HasClass {
+  /**
+   * Describes the nature of an entity's content based on the current representation.
+   * Possible values are implementation-dependent and should be documented.
+   */
+  readonly class: string[];
+
+  /**
+   * Check if this resource has the given class defined on it
+   * @param input The class to look for
+   */
+
+  hasClass(input: string): boolean;
+
+  /**
+   * Check if this resource has all of the given classes defined on it
+   * @param input The classes to look for
+   */
+  hasAllClasses(input: string[]): boolean;
+
+  /**
+   * Check if this resource has at least one of the given classes defined on it
+   * @param input The classes to look for
+   */
+  hasAnyClass(input: string[]): boolean;
+}
+
+export interface HasRel {
+  /**
+   * Defines the relationship of the sub-entity to its parent, per Web Linking (RFC5988) and Link Relations.
+   */
+  readonly rel: string[];
+
+  /**
+   * Check if this resource has the given rel defined on it
+   * @param input The rel to look for
+   */
+
+  hasRel(input: string): boolean;
+
+  /**
+   * Check if this resource has all of the given rels defined on it
+   * @param input The rels to look for
+   */
+  hasAllRels(input: string[]): boolean;
+
+  /**
+   * Check if this resource has at least one of the given rels defined on it
+   * @param input The rels to look for
+   */
+  hasAnyRel(input: string[]): boolean;
+}
+
 /**
  * Representation of a resource as loaded by a client.
  */
-export interface Resource<T> {
+export interface Resource<T> extends HasClass {
   /**
    * Descriptive text about the entity.
    * Optional.
@@ -13,12 +66,6 @@ export interface Resource<T> {
    * Optional.
    */
   readonly properties?: T;
-
-  /**
-   * Describes the nature of an entity's content based on the current representation.
-   * Possible values are implementation-dependent and should be documented.
-   */
-  readonly class: string[];
 
   /**
    * A collection of related links to sub-entities.
@@ -46,18 +93,7 @@ export interface Resource<T> {
 /**
  * Base that all embedded entities must extend.
  */
-export interface EmbeddedEntityBase {
-  /**
-   * Defines the relationship of the sub-entity to its parent, per Web Linking (RFC5988) and Link Relations.
-   */
-  readonly rel: string[];
-
-  /**
-   * Describes the nature of an entity's content based on the current representation.
-   * Possible values are implementation-dependent and should be documented.
-   */
-  readonly class: string[];
-
+export interface EmbeddedEntityBase extends HasClass, HasRel {
   /**
    * Descriptive text about the entity.
    */
@@ -115,17 +151,11 @@ export interface EmbeddedRepresentation extends EmbeddedEntityBase {
 /**
  * Representation of an action that can be performed on a resource.
  */
-export interface Action {
+export interface Action extends HasClass {
   /**
    * The URI of the action.
    */
   readonly href: string;
-
-  /**
-   * Describes the nature of an action based on the current representation.
-   * Possible values are implementation-dependent and should be documented.
-   */
-  readonly class: string[];
 
   /**
    * An enumerated attribute mapping to a protocol method.
@@ -151,13 +181,7 @@ export interface Action {
 /**
  * Representation of a field within an action.
  */
-export interface Field {
-  /**
-   * Describes aspects of the field based on the current representation.
-   * Possible values are implementation-dependent and should be documented.
-   */
-  readonly class: string[];
-
+export interface Field extends HasClass {
   /**
    * The input type of the field.
    */
