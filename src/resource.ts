@@ -181,6 +181,13 @@ export interface Action extends HasClass {
    * A collection of fields.
    */
   readonly fields: { [name: string]: Field };
+
+  /**
+   * Submit this action to the server and get the response.
+   * @param payload The payload to submit
+   */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  submit<T>(payload: { [name: string]: any }): Promise<Resource<T>>;
 }
 
 /**

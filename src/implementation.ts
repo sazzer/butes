@@ -1,16 +1,23 @@
 import * as resource from './resource';
 import * as siren from './siren';
 
+import fetch, { RequestInit } from 'node-fetch';
+
 import { Client } from './client';
 import { URL } from 'url';
-import fetch from 'node-fetch';
 
 /**
  * Standard implementation of the Client interface.
  */
 export class ClientImpl implements Client {
   async get<T>(url: string): Promise<resource.Resource<T>> {
-    const response = await fetch(url);
+    return await this.submit(url, {
+      method: 'GET'
+    });
+  }
+
+  async submit<T>(url: string, options: RequestInit): Promise<resource.Resource<T>> {
+    const response = await fetch(url, options);
     const responseBody: siren.Response<T> = await response.json();
 
     return wrapResponse(this, url, responseBody);
@@ -24,7 +31,7 @@ export class ClientImpl implements Client {
  * @param url The URL that was called, to use as the base for relative URLs in the response
  * @param response The response to wrap
  */
-export function wrapResponse<T>(client: Client, url: string, response: siren.Response<T>): resource.Resource<T> {
+export function wrapResponse<T>(client: ClientImpl, url: string, response: siren.Response<T>): resource.Resource<T> {
   const entityLinks = [];
   const entityRepresentations = [];
   (response.entities ?? []).forEach((entity) => {
@@ -53,7 +60,7 @@ export function wrapResponse<T>(client: Client, url: string, response: siren.Res
  * @param url The URL that was called, to use as the base for relative URLs in the response
  * @param link The link to wrap
  */
-function wrapLink(client: Client, url: string, link: siren.EmbeddedLink): resource.EmbeddedLink {
+function wrapLink(client: ClientImpl, url: string, link: siren.EmbeddedLink): resource.EmbeddedLink {
   const href = new URL(link.href, url).href;
 
   return {
@@ -74,7 +81,7 @@ function wrapLink(client: Client, url: string, link: siren.EmbeddedLink): resour
  * @param entity The entity to wrap
  */
 function wrapEntity(
-  client: Client,
+  client: ClientImpl,
   url: string,
   entity: siren.EmbeddedRepresentation
 ): resource.EmbeddedRepresentation {
@@ -122,35 +129,82 @@ function isEmbeddedRepresentation(object: siren.EmbeddedEntity): object is siren
  * @param url The URL that was called, to use as the base for relative URLs in the response
  * @param actions The list of actions to wrap
  */
-function wrapActions(client: Client, url: string, actions: siren.Action[]): { [name: string]: resource.Action } {
+function wrapActions(client: ClientImpl, url: string, actions: siren.Action[]): { [name: string]: resource.Action } {
   const result: { [name: string]: resource.Action } = {};
 
   actions.forEach((action) => {
-    const href = new URL(action.href, url).href;
-
-    const fields: { [name: string]: resource.Field } = {};
-    if (action.fields !== undefined) {
-      action.fields.forEach((field) => {
-        fields[field.name] = {
-          type: field.type ?? 'text',
-          value: field.value,
-          title: field.title,
-          ...wrapClasses(field.class ?? [])
-        };
-      });
-    }
-
-    result[action.name] = {
-      href: href,
-      method: action.method ?? 'GET',
-      type: action.type ?? 'application/x-www-form-urlencoded',
-      title: action.title,
-      fields,
-      ...wrapClasses(action.class ?? [])
-    };
+    result[action.name] = wrapAction(client, url, action);
   });
 
   return result;
+}
+
+/**
+ * Wrap a single action from an API response in a Resource representation.
+ *
+ * @param client The API client to use for making ongoing calls
+ * @param url The URL that was called, to use as the base for relative URLs in the response
+ * @param action The action to wrap
+ */
+function wrapAction(client: ClientImpl, url: string, action: siren.Action): resource.Action {
+  const href = new URL(action.href, url).href;
+  const method = action.method ?? 'GET';
+  const type = action.type ?? 'application/x-www-form-urlencoded';
+
+  const fields: { [name: string]: resource.Field } = {};
+  if (action.fields !== undefined) {
+    action.fields.forEach((field) => {
+      fields[field.name] = {
+        type: field.type ?? 'text',
+        value: field.value,
+        title: field.title,
+        ...wrapClasses(field.class ?? [])
+      };
+    });
+  }
+
+  return {
+    href,
+    method,
+    type,
+    title: action.title,
+    fields,
+    ...wrapClasses(action.class ?? []),
+    submit: actionSubmitter(client, href, method, type)
+  };
+}
+
+/**
+ * Build a function by which an action can be submitted.
+ *
+ * @param client The API client to us for submitting the action
+ * @param url The URL to which to submit the action
+ * @param method The HTTP method to submit the action via
+ * @param type The expected content type to use for the payload
+ */
+function actionSubmitter(
+  client: ClientImpl,
+  url: string,
+  method: string,
+  type: string
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+): <T>(payload: { [name: string]: any }) => Promise<resource.Resource<T>> {
+  return async (payload) => {
+    let body;
+    if (type === 'application/json') {
+      body = JSON.stringify(payload);
+    } else if (type === 'application/x-www-form-urlencoded') {
+      body = new URLSearchParams(payload);
+    }
+
+    return await client.submit(url, {
+      method,
+      headers: {
+        'content-type': type
+      },
+      body
+    });
+  };
 }
 
 /**

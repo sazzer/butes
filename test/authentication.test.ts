@@ -45,6 +45,37 @@ function setupAuthenticationStart() {
     });
 }
 
+function setupSubmitAuthenticationKnownUser(username: string) {
+  return nock(URL_BASE)
+    .post('/authentication', `username=${username}`)
+    .reply(200, {
+      class: ['authentication'],
+      links: [{ rel: ['self'], href: '/authentication' }],
+      title: 'Authenticate',
+      actions: [
+        {
+          name: 'authenticate',
+          title: 'Log In',
+          method: 'POST',
+          href: '/authenticate',
+          type: 'application/x-www-form-urlencoded',
+          fields: [
+            {
+              name: 'username',
+              type: 'hidden',
+              value: 'existingUser'
+            },
+            {
+              name: 'password',
+              title: 'Password',
+              type: 'password'
+            }
+          ]
+        }
+      ]
+    });
+}
+
 test('Get home document', async (t) => {
   const homeMock = setupHome();
 
@@ -75,4 +106,29 @@ test('Get authentication document', async (t) => {
   t.is(authenticationStartResource.title, 'Authentication');
 
   t.true(authenticationMock.isDone());
+});
+
+test('Submit Username', async (t) => {
+  const homeMock = setupHome();
+  const authenticationMock = setupAuthenticationStart();
+  const submitAuthenticationMock = setupSubmitAuthenticationKnownUser('testuser');
+
+  const client = newClient();
+  const homeResource = await client.get('http://api.x.io/');
+
+  t.true(homeMock.isDone());
+
+  const authenticationStartResource = await homeResource.entityLinks
+    .find((link) => link.hasRel('tag:butes,2020:rels/authentication'))
+    .fetch();
+
+  t.true(authenticationMock.isDone());
+
+  const authenticationResource = await authenticationStartResource.actions['authenticate'].submit({
+    username: 'testuser'
+  });
+
+  t.is(authenticationResource.title, 'Authenticate');
+
+  t.true(submitAuthenticationMock.isDone());
 });

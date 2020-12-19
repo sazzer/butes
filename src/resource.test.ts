@@ -1,8 +1,8 @@
-import { Client } from './client';
-import test from 'ava';
-import { wrapResponse } from './implementation';
+import { ClientImpl, wrapResponse } from './implementation';
 
-const mockClient = {} as Client;
+import test from 'ava';
+
+const mockClient = {} as ClientImpl;
 
 // Tests with an empty model
 test('Parse empty model', (t) => {
