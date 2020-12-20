@@ -20,8 +20,19 @@ export class ClientImpl implements Client {
 
   constructor() {
     this.responseMappers = {
-      'application/vnd.siren+json': async (response, url) => {
-        return await wrapResponse(this, url, response);
+      'application/vnd.siren+json': async <T>(response, url) => {
+        const responseBody: siren.Response<T> = await response.json();
+
+        return wrapResponse(this, url, response, responseBody);
+      },
+      null: async (response, url) => {
+        if (response.status === 204) {
+          // It was an HTTP 204 No Content, so act as if it was a blank Siren response.
+          return wrapResponse(this, url, response, {});
+        }
+
+        // Any other status code with a null content-type is an error.
+        throw new UnsupportedContentTypeError(response);
       },
       'application/problem+json': async (response) => {
         const problem = await wrapProblem(response);
@@ -80,14 +91,14 @@ async function wrapProblem(response: Response): Promise<Problem> {
  * @param client The API client to use for making ongoing calls
  * @param url The URL that was called, to use as the base for relative URLs in the response
  * @param response The response to wrap
+ * @param responseBody The already parsed response body
  */
 export async function wrapResponse<T>(
   client: ClientImpl,
   url: string,
-  response: Response
+  response: Response,
+  responseBody: siren.Response<T>
 ): Promise<resource.Resource<T>> {
-  const responseBody: siren.Response<T> = await response.json();
-
   const entityLinks = [];
   const entityRepresentations = [];
   (responseBody.entities ?? []).forEach((entity) => {
