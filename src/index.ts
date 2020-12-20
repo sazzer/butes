@@ -1,7 +1,7 @@
 import { Client } from './client';
 import { ClientImpl } from './implementation';
 
-export { Client } from './client';
+export { Client, NotSirenResponseError } from './client';
 export * from './resource';
 
 /**

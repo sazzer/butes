@@ -1,9 +1,9 @@
 import * as resource from './resource';
 import * as siren from './siren';
 
+import { Client, NotSirenResponseError } from './client';
 import fetch, { RequestInit } from 'node-fetch';
 
-import { Client } from './client';
 import { URL } from 'url';
 
 /**
@@ -18,6 +18,12 @@ export class ClientImpl implements Client {
 
   async submit<T>(url: string, options: RequestInit): Promise<resource.Resource<T>> {
     const response = await fetch(url, options);
+
+    const contentType = response.headers.get('content-type');
+    if (contentType !== 'application/vnd.siren+json') {
+      throw new NotSirenResponseError(response);
+    }
+
     const responseBody: siren.Response<T> = await response.json();
 
     return wrapResponse(this, url, responseBody);
