@@ -2,6 +2,7 @@ import * as resource from './resource';
 import * as siren from './siren';
 
 import { Client, UnsupportedContentTypeError } from './client';
+import { Problem, ProblemError } from './problem';
 import fetch, { RequestInit, Response } from 'node-fetch';
 
 import { URL } from 'url';
@@ -23,6 +24,10 @@ export class ClientImpl implements Client {
         const responseBody: siren.Response<T> = await response.json();
 
         return wrapResponse(this, url, responseBody);
+      },
+      'application/problem+json': async (response) => {
+        const problem = await wrapProblem(response);
+        throw new ProblemError(problem);
       }
     };
   }
@@ -44,6 +49,29 @@ export class ClientImpl implements Client {
       return mapper(response, url);
     }
   }
+}
+
+async function wrapProblem(response: Response): Promise<Problem> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const responseBody: Record<string, any> = await response.json();
+
+  const extra = {};
+  Object.keys(responseBody)
+    .filter((key) => key !== 'type')
+    .filter((key) => key !== 'title')
+    .filter((key) => key !== 'status')
+    .filter((key) => key !== 'detail')
+    .filter((key) => key !== 'instance')
+    .forEach((key) => (extra[key] = responseBody[key]));
+
+  return {
+    type: responseBody.type ?? 'about:blank',
+    title: responseBody.title,
+    status: responseBody.status ?? response.status,
+    detail: responseBody.detail,
+    instance: responseBody.instance,
+    extra
+  };
 }
 
 /**

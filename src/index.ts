@@ -1,8 +1,9 @@
 import { Client } from './client';
 import { ClientImpl } from './implementation';
 
-export { Client, UnsupportedContentTypeError } from './client';
+export * from './client';
 export * from './resource';
+export * from './problem';
 
 /**
  * Construct a new Client implementation that can be used to access a Siren API.
