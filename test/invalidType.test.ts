@@ -1,4 +1,4 @@
-import { NotSirenResponseError, newClient } from '../src';
+import { UnsupportedContentTypeError, newClient } from '../src';
 
 import nock from 'nock';
 import test from 'ava';
@@ -27,8 +27,8 @@ test('HAL Example', async (t) => {
     await client.get('http://api.x.io/hal');
     t.fail('Expected an exception');
   } catch (e) {
-    t.true(e instanceof NotSirenResponseError);
-    const err = e as NotSirenResponseError;
+    t.true(e instanceof UnsupportedContentTypeError);
+    const err = e as UnsupportedContentTypeError;
 
     t.is(err.response.status, 200);
     t.is(err.response.headers.get('content-type'), 'application/hal+json');

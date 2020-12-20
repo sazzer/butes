@@ -13,8 +13,8 @@ export interface Client {
   get<T>(url: string): Promise<Resource<T>>;
 }
 
-// Error to throw if an API response was not a Siren response
-export class NotSirenResponseError extends Error {
+// Error to throw if an API response was not a supported Content Type
+export class UnsupportedContentTypeError extends Error {
   // The response
   readonly response: Response;
 
@@ -22,7 +22,7 @@ export class NotSirenResponseError extends Error {
     super(`API response was not a Siren response`);
 
     this.response = response;
-    this.name = 'NotSirenResponseError';
+    this.name = 'UnsupportedContentTypeError';
     Object.setPrototypeOf(this, new.target.prototype);
   }
 }

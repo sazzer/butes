@@ -1,7 +1,7 @@
 import { Client } from './client';
 import { ClientImpl } from './implementation';
 
-export { Client, NotSirenResponseError } from './client';
+export { Client, UnsupportedContentTypeError } from './client';
 export * from './resource';
 
 /**
