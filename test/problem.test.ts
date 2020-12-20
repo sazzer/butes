@@ -33,6 +33,9 @@ test('Simple Problem', async (t) => {
     t.is(err.problem.instance, undefined);
     t.deepEqual(err.problem.extra, {});
 
+    t.is(err.problem.getStatus(), 404);
+    t.is(err.problem.getHeaders().get('content-type'), 'application/problem+json');
+
     t.true(scope.isDone());
   }
 });

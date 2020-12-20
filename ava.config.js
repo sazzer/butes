@@ -1,6 +1,6 @@
 export default {
   verbose: true,
-  files: ['src/**/*.test.ts'],
+  files: ['test/**/*.test.ts'],
   extensions: ['ts'],
   require: ['ts-node/register']
 };

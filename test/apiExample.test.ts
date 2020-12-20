@@ -62,6 +62,13 @@ test('Request API Example', async (t) => {
 
   // Assert the response
   t.is(resource.title, undefined);
+  t.true(resource.hasClass('order'));
+  t.true(resource.hasAnyClass(['unknown', 'order']));
+  t.true(resource.hasAnyClass(['order', 'unknown']));
+  t.false(resource.hasAllClasses(['unknown', 'order']));
+  t.false(resource.hasAllClasses(['order', 'unknown']));
+  t.true(resource.hasAllClasses(['order']));
+
   t.deepEqual(resource.class, ['order']);
   t.deepEqual(resource.properties, {
     orderNumber: 42,
@@ -76,6 +83,12 @@ test('Request API Example', async (t) => {
   t.deepEqual(resource.links[0].class, []);
   t.is(resource.links[0].title, undefined);
   t.is(resource.links[0].type, undefined);
+  t.true(resource.links[0].hasRel('self'));
+  t.true(resource.links[0].hasAnyRel(['unknown', 'self']));
+  t.true(resource.links[0].hasAnyRel(['self', 'unknown']));
+  t.false(resource.links[0].hasAllRels(['unknown', 'self']));
+  t.false(resource.links[0].hasAllRels(['self', 'unknown']));
+  t.true(resource.links[0].hasAllRels(['self']));
 
   t.deepEqual(resource.links[1].rel, ['previous']);
   t.is(resource.links[1].href, 'http://api.x.io/orders/41');
@@ -96,6 +109,13 @@ test('Request API Example', async (t) => {
   t.deepEqual(resource.entityLinks[0].rel, ['http://x.io/rels/order-items']);
   t.is(resource.entityLinks[0].title, undefined);
   t.is(resource.entityLinks[0].type, undefined);
+  t.true(resource.entityLinks[0].hasClass('items'));
+  t.true(resource.entityLinks[0].hasClass('collection'));
+  t.true(resource.entityLinks[0].hasAnyClass(['unknown', 'items', 'collection']));
+  t.true(resource.entityLinks[0].hasAnyClass(['items', 'collection', 'unknown']));
+  t.false(resource.entityLinks[0].hasAllClasses(['unknown', 'items', 'collection']));
+  t.false(resource.entityLinks[0].hasAllClasses(['items', 'collection', 'unknown']));
+  t.true(resource.entityLinks[0].hasAllClasses(['items', 'collection']));
 
   t.is(1, resource.entityRepresentations.length);
 

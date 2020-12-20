@@ -1,7 +1,9 @@
+import { ApiResponse } from './response';
+
 /**
  * Representation of a Problem response as defined by RFC-7807.
  */
-export interface Problem {
+export interface Problem extends ApiResponse {
   /** A URI reference [RFC3986] that identifies the problem type. */
   readonly type: string;
 

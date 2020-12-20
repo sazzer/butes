@@ -1,3 +1,5 @@
+import { ApiResponse } from './response';
+
 export interface HasClass {
   /**
    * Describes the nature of an entity's content based on the current representation.
@@ -54,7 +56,7 @@ export interface HasRel {
 /**
  * Representation of a resource as loaded by a client.
  */
-export interface Resource<T> extends HasClass {
+export interface Resource<T> extends ApiResponse, HasClass {
   /**
    * Descriptive text about the entity.
    * Optional.

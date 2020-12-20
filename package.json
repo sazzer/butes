@@ -13,9 +13,8 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "clean": "rimraf dist",
-    "test": "run-s test:lint test:unit test:integration",
-    "test:unit": "ava",
-    "test:integration": "ava --config ava-integration.config.js",
+    "test": "run-s test:lint test:integration",
+    "test:integration": "ava",
     "test:lint": "eslint . --ext .ts",
     "build": "run-s clean tsc",
     "tsc": "tsc",

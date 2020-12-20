@@ -20,10 +20,8 @@ export class ClientImpl implements Client {
 
   constructor() {
     this.responseMappers = {
-      'application/vnd.siren+json': async <T>(response, url) => {
-        const responseBody: siren.Response<T> = await response.json();
-
-        return wrapResponse(this, url, responseBody);
+      'application/vnd.siren+json': async (response, url) => {
+        return await wrapResponse(this, url, response);
       },
       'application/problem+json': async (response) => {
         const problem = await wrapProblem(response);
@@ -70,7 +68,9 @@ async function wrapProblem(response: Response): Promise<Problem> {
     status: responseBody.status ?? response.status,
     detail: responseBody.detail,
     instance: responseBody.instance,
-    extra
+    extra,
+    getStatus: () => response.status,
+    getHeaders: () => response.headers
   };
 }
 
@@ -81,10 +81,16 @@ async function wrapProblem(response: Response): Promise<Problem> {
  * @param url The URL that was called, to use as the base for relative URLs in the response
  * @param response The response to wrap
  */
-export function wrapResponse<T>(client: ClientImpl, url: string, response: siren.Response<T>): resource.Resource<T> {
+export async function wrapResponse<T>(
+  client: ClientImpl,
+  url: string,
+  response: Response
+): Promise<resource.Resource<T>> {
+  const responseBody: siren.Response<T> = await response.json();
+
   const entityLinks = [];
   const entityRepresentations = [];
-  (response.entities ?? []).forEach((entity) => {
+  (responseBody.entities ?? []).forEach((entity) => {
     if (isEmbeddedLink(entity)) {
       entityLinks.push(wrapLink(client, url, entity));
     } else if (isEmbeddedRepresentation(entity)) {
@@ -93,13 +99,15 @@ export function wrapResponse<T>(client: ClientImpl, url: string, response: siren
   });
 
   return {
-    title: response.title,
-    properties: response.properties,
-    links: (response.links ?? []).map((link) => wrapLink(client, url, link)),
+    title: responseBody.title,
+    properties: responseBody.properties,
+    links: (responseBody.links ?? []).map((link) => wrapLink(client, url, link)),
     entityLinks,
     entityRepresentations,
-    actions: wrapActions(client, url, response.actions ?? []),
-    ...wrapClasses(response.class ?? [])
+    actions: wrapActions(client, url, responseBody.actions ?? []),
+    ...wrapClasses(responseBody.class ?? []),
+    getStatus: () => response.status,
+    getHeaders: () => response.headers
   };
 }
 
