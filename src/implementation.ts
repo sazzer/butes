@@ -15,7 +15,7 @@ export class ClientImpl implements Client {
    * Means to map the API response to the actual client response
    */
   private responseMappers: {
-    [contentType: string]: <T>(response: Response, url: string) => Promise<resource.Resource<T>>;
+    [contentType: string]: <T>(response: Response, url: string, options: RequestInit) => Promise<resource.Resource<T>>;
   };
 
   constructor() {
@@ -25,9 +25,10 @@ export class ClientImpl implements Client {
 
         return wrapResponse(this, url, response, responseBody);
       },
-      null: async (response, url) => {
-        if (response.status === 204) {
-          // It was an HTTP 204 No Content, so act as if it was a blank Siren response.
+      null: async (response, url, options) => {
+        if (response.status === 204 || options.method === 'HEAD') {
+          // It was an HTTP 204 No Content, or a HEAD request so no body is expected.
+          // In this case, act as if it was a blank Siren response.
           return wrapResponse(this, url, response, {});
         }
 
@@ -55,7 +56,7 @@ export class ClientImpl implements Client {
     if (mapper === undefined) {
       throw new UnsupportedContentTypeError(response);
     } else {
-      return mapper(response, url);
+      return mapper(response, url, options);
     }
   }
 }
@@ -247,30 +248,39 @@ function wrapAction(client: ClientImpl, url: string, action: siren.Action): reso
  * Build a function by which an action can be submitted.
  *
  * @param client The API client to us for submitting the action
- * @param url The URL to which to submit the action
+ * @param href The URL to which to submit the action
  * @param method The HTTP method to submit the action via
  * @param type The expected content type to use for the payload
  */
 function actionSubmitter(
   client: ClientImpl,
-  url: string,
+  href: string,
   method: string,
   type: string
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
 ): <T>(payload: { [name: string]: any }) => Promise<resource.Resource<T>> {
   return async (payload) => {
     let body;
-    if (type === 'application/json') {
-      body = JSON.stringify(payload);
-    } else if (type === 'application/x-www-form-urlencoded') {
-      body = new URLSearchParams(payload);
+    const headers = {};
+    const url = new URL(href);
+
+    if (method === 'GET' || method === 'HEAD') {
+      // GET and HEAD act differently
+      for (const param of Object.keys(payload)) {
+        url.searchParams.append(param, payload[param]);
+      }
+    } else {
+      if (type === 'application/json') {
+        body = JSON.stringify(payload);
+      } else if (type === 'application/x-www-form-urlencoded') {
+        body = new URLSearchParams(payload);
+      }
+      headers['content-type'] = type;
     }
 
-    return await client.submit(url, {
+    return await client.submit(url.href, {
       method,
-      headers: {
-        'content-type': type
-      },
+      headers,
       body
     });
   };
