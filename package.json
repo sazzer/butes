@@ -1,6 +1,6 @@
 {
   "name": "butes",
-  "version": "1.0.0",
+  "version": "0.0.1",
   "description": "Client library for interacting with Siren APIs",
   "author": "Graham Cox <graham@grahamcox.co.uk>",
   "keywords": [
@@ -18,7 +18,8 @@
     "test:lint": "eslint . --ext .ts",
     "build": "run-s clean tsc",
     "tsc": "tsc",
-    "link": "npm run build && cd dist && npm link"
+    "link": "cd dist && npm link",
+    "prepublish": "run-s build test link"
   },
   "license": "ISC",
   "dependencies": {
