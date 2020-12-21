@@ -19,7 +19,7 @@
     "build": "run-s clean tsc",
     "tsc": "tsc",
     "link": "cd dist && npm link",
-    "prepublish": "run-s build test link"
+    "prepublishOnly": "run-s build test link"
   },
   "license": "ISC",
   "dependencies": {
