@@ -1,5 +1,11 @@
 import { Resource } from './resource';
-import { Response } from 'node-fetch';
+import { RequestInit, Response } from 'node-fetch';
+
+/**
+ * The type to use for actually making API calls.
+ * This is the exact same shape as the Fetch API, but anything that fits can be used.
+ */
+export type Fetcher = (url: string, request: RequestInit) => Promise<Response>;
 
 /**
  * The actual Butes client used to talk to Siren APIs

@@ -1,9 +1,9 @@
 import * as resource from './resource';
 import * as siren from './siren';
 
-import { Client, UnsupportedContentTypeError } from './client';
+import { Client, Fetcher, UnsupportedContentTypeError } from './client';
 import { Problem, ProblemError } from './problem';
-import fetch, { RequestInit, Response } from 'node-fetch';
+import { RequestInit, Response } from 'node-fetch';
 
 import { URL } from 'url';
 
@@ -11,6 +11,9 @@ import { URL } from 'url';
  * Standard implementation of the Client interface.
  */
 export class ClientImpl implements Client {
+  /**  */
+  private fetcher: Fetcher;
+
   /**
    * Means to map the API response to the actual client response
    */
@@ -18,7 +21,9 @@ export class ClientImpl implements Client {
     [contentType: string]: <T>(response: Response, url: string, options: RequestInit) => Promise<resource.Resource<T>>;
   };
 
-  constructor() {
+  constructor(fetcher: Fetcher) {
+    this.fetcher = fetcher;
+
     this.responseMappers = {
       'application/vnd.siren+json': async <T>(response, url) => {
         const responseBody: siren.Response<T> = await response.json();
@@ -49,7 +54,7 @@ export class ClientImpl implements Client {
   }
 
   async submit<T>(url: string, options: RequestInit): Promise<resource.Resource<T>> {
-    const response = await fetch(url, options);
+    const response = await this.fetcher(url, options);
 
     const contentType = response.headers.get('content-type');
     const mapper = this.responseMappers[contentType];
