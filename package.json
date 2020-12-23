@@ -1,6 +1,6 @@
 {
   "name": "butes",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Client library for interacting with Siren APIs",
   "author": "Graham Cox <graham@grahamcox.co.uk>",
   "keywords": [
