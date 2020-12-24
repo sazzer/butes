@@ -5,8 +5,6 @@ import { Client, Fetcher, UnsupportedContentTypeError } from './client';
 import { Problem, ProblemError } from './problem';
 import { RequestInit, Response } from 'node-fetch';
 
-import { URL } from 'url';
-
 /**
  * Standard implementation of the Client interface.
  */
